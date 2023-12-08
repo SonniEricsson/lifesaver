@@ -1,0 +1,1 @@
+    print("Welcome, " + os.getlogin())
