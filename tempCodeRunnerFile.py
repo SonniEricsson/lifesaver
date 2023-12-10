@@ -1,1 +1,1 @@
-    print("Welcome, " + os.getlogin())
+(20,10)
