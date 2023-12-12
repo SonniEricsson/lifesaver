@@ -1,1 +1,1 @@
-(20,10)
+, font=customtkinter.CTkFont(size=25)
