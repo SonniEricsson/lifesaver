@@ -1,6 +1,1 @@
-                self.check_path.configure(text="File path has been found.\nDownload in progress.")
-                time.sleep(1)
-                self.check_path.configure(text="File path has been found.\nDownload in progress..")
-                time.sleep(1)
-                self.check_path.configure(text="File path has been found.\nDownload in progress...")
-                time.sleep(1)
+0

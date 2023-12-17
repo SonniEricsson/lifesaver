@@ -28,10 +28,10 @@ class downloadingContent(mainContent):
         mainContent.__init__(self, *args, **kwargs)
         
         self.download_description = customtkinter.CTkLabel(self, text="Automatically shutdown PC after download has finished successfully.\nPlease enter the file path below.", font=customtkinter.CTkFont(size=15), wraplength=500)
-        self.download_description.grid(row=0, column=0, padx=20, pady=20)
+        self.download_description.grid(row=0, column=0, columnspan=4, padx=20, pady=20)
 
-        self.download_list = customtkinter.CTkLabel(self, text="Downloads", font=customtkinter.CTkFont(size=20, weight="bold"))
-        self.download_list.grid(row=0, column=1, padx=20, pady=20)
+        #self.download_list = customtkinter.CTkLabel(self, text="Downloads", font=customtkinter.CTkFont(size=20, weight="bold"))
+        #self.download_list.grid(row=0, column=1, padx=20, pady=20)
 
         self.check_path = customtkinter.CTkLabel(self, text="", font=customtkinter.CTkFont(size=15))
         self.check_path.grid(row=2, column=0, padx=20)
@@ -39,51 +39,88 @@ class downloadingContent(mainContent):
         self.entry = customtkinter.CTkEntry(self, placeholder_text="File path")
         self.entry.grid(row=3, column=0, columnspan=2, padx=20, pady=20, sticky="nsew")
         self.entry.bind("<Return>", self.check_download)
+
+        #self.cancel = customtkinter.CTkButton(self, text="Cancel shutdown")
+        #self.cancel.grid(row=3, column=2, padx=(0,20), pady=20, sticky="nsew")
+
+        self.counter = 0
     
     def check_download(self, parameter):
         filepath = self.entry.get()
         
         while True:
             if os.path.exists(filepath):
+                self.check_path.configure(text="File path has been found.")
                 break
             else:
                 self.check_path.configure(text="File path does not exist. Please enter a valid path.")
                 return 0
         
-        downloading = True
-        while downloading:
-            self.check_path.configure(text="File path has been found.\nDownload in progress.")
-            old_mods = os.path.getmtime(filepath)
-            old_size = os.path.getsize(filepath)
-            time.sleep(60*2)  
-            new_mods = os.path.getmtime(filepath)
-            new_size = os.path.getsize(filepath)
+        old_mods = os.path.getmtime(filepath)
+        old_size = os.path.getsize(filepath)
+        time.sleep(30)
+        new_mods = os.path.getmtime(filepath)
+        new_size = os.path.getsize(filepath)
 
-            if old_size == new_size and old_mods == new_mods:
-                downloading == False
-                shutdown()
+        if old_size < new_size:
+            downloading = True
+            while downloading:
+                old_mods = os.path.getmtime(filepath)
+                old_size = os.path.getsize(filepath)
+                #time.sleep(60*2)
+                self.update_download1()
+                self.counter = 0
+                new_mods = os.path.getmtime(filepath)
+                new_size = os.path.getsize(filepath)
+
+                if old_size == new_size and old_mods == new_mods:
+                    downloading == False
+        
+        self.check_path.configure(text="Download has completed. Shutting down...")
+        time.sleep(30)
+        shutdown()
+
+    def update_download1(self):
+        if self.counter == 60:
+            return None
+        self.check_path.configure(text="File path has been found.\nDownload in progress.")
+        self.counter += 1
+        self.after(1000, self.update_download2)
+    def update_download2(self):
+        if self.counter == 60:
+            return None
+        self.check_path.configure(text="File path has been found.\nDownload in progress..")
+        self.counter += 1
+        self.after(1000, self.update_download3)
+    def update_download3(self):
+        if self.counter == 60:
+            return None
+        self.check_path.configure(text="File path has been found.\nDownload in progress...")
+        self.counter += 1
+        self.after(1000, self.update_download1)
 
 class sleepContent(mainContent):
     def __init__(self, *args, **kwargs):
         mainContent.__init__(self, *args, **kwargs)
         #self.grid_rowconfigure((0,1,2), weight=0)
+        self.grid_columnconfigure(1, weight=1)
 
-        self.sleep_description = customtkinter.CTkLabel(self, text="Automatically shutdown PC after a set amount of time.\nUse this feature if you want to go to sleep with something running in the background.", font=customtkinter.CTkFont(size=15), wraplength=400)
+        self.sleep_description = customtkinter.CTkLabel(self, text="Automatically shutdown PC after a set amount of time.\nUse this feature if you want to go to sleep with something running in the background.\n\nSet the timer in minutes down below.", font=customtkinter.CTkFont(size=15), wraplength=400)
         self.sleep_description.grid(row=0, column=0, columnspan=4, padx=20, pady=20)
 
-        self.time_label = customtkinter.CTkLabel(self, text="Time in minutes", font=customtkinter.CTkFont(size=18, weight="bold"))
-        self.time_label.grid(row=1, column=0)
+        #self.time_label = customtkinter.CTkLabel(self, text="Set the timer in minutes", font=customtkinter.CTkFont(size=18, weight="bold"))
+        #self.time_label.grid(row=1, column=0, padx=20)
 
         var=tk.IntVar()
         self.time_slider = customtkinter.CTkSlider(self, from_=0, to=100, command=self.sliding)
-        self.time_slider.grid(row=1, column=1)
+        self.time_slider.grid(row=1, column=0, columnspan=4)
         self.time_slider.set(50)
 
-        self.time_value = customtkinter.CTkLabel(self, text=self.time_slider.get())
-        self.time_value.grid(row=1, column=2, padx=(0,20))
+        self.time_value = customtkinter.CTkLabel(self, text=self.time_slider.get(), font=customtkinter.CTkFont(size=18))
+        self.time_value.grid(row=1, column=0, padx=120)
 
         self.time_button = customtkinter.CTkButton(self, text="Start sleep timer", command=self.start_sleep)
-        self.time_button.grid(row=1, column=3)
+        self.time_button.grid(row=2, column=0, columnspan=4)
 
         #Time countdown
     
