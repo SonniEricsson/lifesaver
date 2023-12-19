@@ -44,56 +44,98 @@ class downloadingContent(mainContent):
         #self.cancel.grid(row=3, column=2, padx=(0,20), pady=20, sticky="nsew")
 
         self.counter = 0
+        self.counter2 = 0
+        self.filepath = 0
+        self.size_comparison = [] #index 0 is old mod, index 1 is old size, index 2 is new mod, index 3 is new size
     
     def check_download(self, parameter):
-        filepath = self.entry.get()
+        self.filepath = self.entry.get()
         
-        while True:
-            if os.path.exists(filepath):
-                self.check_path.configure(text="File path has been found.")
-                break
+        self.after(0, self.checking_path)
+        
+        
+        #print("test")
+        #if old_size == new_size:
+        #    self.check_path.configure(text="File path has been found.\nNo current download.")
+        #else:
+        #    downloading = False
+        #    while downloading:
+        #        old_mods = os.path.getmtime(self.filepath)
+        #        old_size = os.path.getsize(self.filepath)
+        #        #time.sleep(60*2)
+        #        self.update_download1()
+        #        self.counter = 0
+        #        new_mods = os.path.getmtime(self.filepath)
+        #        new_size = os.path.getsize(self.filepath)
+
+        #        if old_size == new_size and old_mods == new_mods:
+        #            downloading == False
+        #            self.check_path.configure(text="Download has completed. Shutting down...")
+        #            time.sleep(30)
+        #            #shutdown()
+    def update_sizes(self):
+        self.size_comparison.append(os.path.getmtime(self.filepath)) 
+        self.size_comparison.append(os.path.getsize(self.filepath))
+        if len(self.size_comparison) == 4:
+            if self.size_comparison[1] == self.size_comparison[3]: #no download progression
+                self.check_path.configure(text="Download has completed. Shutting down...")
+                #self.after(30000, self.shutdown)
             else:
-                self.check_path.configure(text="File path does not exist. Please enter a valid path.")
-                return 0
+                self.size_comparison.pop() #reset list
+                self.size_comparison.pop()
+        self.after(0, self.update_download1)
+    
+    def first_sizes(self):
+        self.size_comparison.append(os.path.getmtime(self.filepath)) 
+        self.size_comparison.append(os.path.getsize(self.filepath))
+        if len(self.size_comparison) == 4:
+            if self.size_comparison[1] == self.size_comparison[3]: #no download progression
+                self.check_path.configure(text="File path has been found.\nNo current download.")
+            else:
+                self.size_comparison.pop() #reset list
+                self.size_comparison.pop()
+                self.after(0, self.update_download1)
         
-        old_mods = os.path.getmtime(filepath)
-        old_size = os.path.getsize(filepath)
-        time.sleep(30)
-        new_mods = os.path.getmtime(filepath)
-        new_size = os.path.getsize(filepath)
 
-        if old_size < new_size:
-            downloading = True
-            while downloading:
-                old_mods = os.path.getmtime(filepath)
-                old_size = os.path.getsize(filepath)
-                #time.sleep(60*2)
-                self.update_download1()
-                self.counter = 0
-                new_mods = os.path.getmtime(filepath)
-                new_size = os.path.getsize(filepath)
-
-                if old_size == new_size and old_mods == new_mods:
-                    downloading == False
+    def checking_path(self):
+        if os.path.exists(self.filepath):
+            self.check_path.configure(text="File path has been found.\nChecking for download, please wait.")
+            self.after(0, self.do_nothing)
+        else:
+            self.check_path.configure(text="File path does not exist. Please enter a valid path.")
+            
         
-        self.check_path.configure(text="Download has completed. Shutting down...")
-        time.sleep(30)
-        shutdown()
+    def do_nothing(self):
+        print("1")
+        if self.counter2 == 0:
+            self.after(0, self.first_sizes)
+        elif self.counter2 == 10:
+            self.after(0, self.first_sizes)
+            return None
+        self.check_path.configure(text="File path has been found.\nChecking for download, please wait.")
+        self.counter2 += 1
+        self.after(1000, self.do_nothing)
 
     def update_download1(self):
-        if self.counter == 60:
+        print("2")
+        if self.counter == 10:
+            self.after(0, self.update_sizes)
             return None
         self.check_path.configure(text="File path has been found.\nDownload in progress.")
         self.counter += 1
         self.after(1000, self.update_download2)
     def update_download2(self):
-        if self.counter == 60:
+        print("2")
+        if self.counter == 10:
+            self.after(0, self.update_sizes)
             return None
         self.check_path.configure(text="File path has been found.\nDownload in progress..")
         self.counter += 1
         self.after(1000, self.update_download3)
     def update_download3(self):
-        if self.counter == 60:
+        print("2")
+        if self.counter == 10:
+            
             return None
         self.check_path.configure(text="File path has been found.\nDownload in progress...")
         self.counter += 1
@@ -163,7 +205,11 @@ class App(customtkinter.CTk):
 
         self.welcome_frame.show()
 
+        self.protocol('WM_DELETE_WINDOW', self.closeWindow)
 
+
+    def closeWindow(self):
+        self.destroy()
 
     def button_pressed():
         print("shit")
