@@ -34,12 +34,18 @@ class downloadingContent(mainContent):
         #self.download_list.grid(row=0, column=1, padx=20, pady=20)
 
         self.check_path = customtkinter.CTkLabel(self, text="", font=customtkinter.CTkFont(size=15))
-        self.check_path.grid(row=2, column=0, padx=20)
+        self.check_path.grid(row=2, column=0, padx=20, columnspan=2)
 
-        self.entry = customtkinter.CTkEntry(self, placeholder_text="File path")
-        self.entry.grid(row=3, column=0, columnspan=2, padx=20, pady=20, sticky="nsew")
-        self.entry.bind("<Return>", self.check_download)
+        self.button_frame = customtkinter.CTkFrame(self)
+        self.button_frame.grid(row=1, column=0, columnspan=2)
+        
+        self.steam_button = customtkinter.CTkButton(master=self.button_frame, text="Steam", command=self.check_steam)
+        self.steam_button.grid(row=1, column=0, padx=20, pady=20)
 
+        self.other_button = customtkinter.CTkButton(master=self.button_frame, text="Other", command=self.check_other)
+        self.other_button.grid(row=1, column=1, padx=(0,20), pady=20)
+
+        
         #self.cancel = customtkinter.CTkButton(self, text="Cancel shutdown")
         #self.cancel.grid(row=3, column=2, padx=(0,20), pady=20, sticky="nsew")
 
@@ -47,8 +53,58 @@ class downloadingContent(mainContent):
         self.counter2 = 0
         self.filepath = 0
         self.size_comparison = [] #index 0 is old mod, index 1 is old size, index 2 is new mod, index 3 is new size
+        self.counting_dots = 1
+
+        self.continue_operation = True
     
+    def check_steam(self):
+        self.counting_dots = 1
+        self.filepath = "C:\\Program Files (x86)\\Steam\\steamapps\\downloding"
+        if os.path.exists(self.filepath):
+            if os.listdir(self.filepath) == []:
+                self.check_path.configure(text="File path has been found.\nNo current download.")
+            else:
+                self.cancel = customtkinter.CTkButton(self, fg_color="transparent", border_width=2, text_color=("gray10", "#DCE4EE"), text="Cancel", width=100, command=self.cancel_operation)
+                self.cancel.grid(row=3, column=0, padx=(20, 20), pady=(20, 20))
+                self.after(0, self.steam_download)
+        else:
+            self.check_path.configure(text="Default path could not be found.\nPlease enter file path of Steam downloading folder.")
+            self.entry = customtkinter.CTkEntry(self, placeholder_text="File path")
+            self.entry.grid(row=3, column=0, padx=(20,0), pady=20, sticky="nsew") #nsew fills whole row
+            self.entry.bind("<Return>", self.check_steam_manually)
+
+            self.cancel = customtkinter.CTkButton(self, fg_color="transparent", border_width=2, text_color=("gray10", "#DCE4EE"), text="Cancel", width=100, command=self.cancel_operation)
+            self.cancel.grid(row=3, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
+
+    def cancel_operation(self):
+        self.continue_operation = False
+
+    def check_steam_manually(self, parameter):
+        self.filepath = self.entry.get()
+        if os.path.exists(self.filepath):
+            if os.listdir(self.filepath) == []:
+                self.check_path.configure(text="File path has been found.\nNo current download.")
+            else:
+                self.after(0, self.steam_download)
+        else:
+            self.check_path.configure(text="Input path could not be found.\nPlease enter a valid file path of Steam downloading folder.")
+            
+
+    
+    def check_other(self):
+        self.entry = customtkinter.CTkEntry(self, placeholder_text="File path")
+        self.entry.grid(row=3, column=0, padx=(20,0), pady=20, sticky="nsew")
+        self.entry.bind("<Return>", self.check_download)
+
+        self.cancel = customtkinter.CTkButton(self, fg_color="transparent", border_width=2, text_color=("gray10", "#DCE4EE"), text="Cancel", width=100, command=self.cancel_operation)
+        self.cancel.grid(row=3, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
+
     def check_download(self, parameter):
+        self.counter = 0
+        self.counter2 = 0
+        self.filepath = 0
+        self.size_comparison = []
+        
         self.filepath = self.entry.get()
         
         self.after(0, self.checking_path)
@@ -73,6 +129,25 @@ class downloadingContent(mainContent):
         #            self.check_path.configure(text="Download has completed. Shutting down...")
         #            time.sleep(30)
         #            #shutdown()
+    def steam_download(self):
+        if self.continue_operation:
+            if os.listdir(self.filepath) != []:
+                if self.counting_dots == 1:
+                    self.check_path.configure(text="File path has been found.\nDownload in progress.")
+                    self.counting_dots = 2
+                elif self.counting_dots == 2:
+                    self.check_path.configure(text="File path has been found.\nDownload in progress..")
+                    self.counting_dots = 3
+                elif self.counting_dots == 3:
+                    self.check_path.configure(text="File path has been found.\nDownload in progress...")
+                    self.counting_dots = 1
+                self.after(1000, self.steam_download)
+            else:
+                self.check_path.configure(text="Download has completed. Shutting down...")
+                self.after(10000, shutdown)
+
+        self.continue_operation = True #reset
+
     def update_sizes(self):
         self.size_comparison.append(os.path.getmtime(self.filepath)) 
         self.size_comparison.append(os.path.getsize(self.filepath))
@@ -86,8 +161,12 @@ class downloadingContent(mainContent):
         self.after(0, self.update_download1)
     
     def first_sizes(self):
-        self.size_comparison.append(os.path.getmtime(self.filepath)) 
-        self.size_comparison.append(os.path.getsize(self.filepath))
+        mods = os.path.getmtime(self.filepath)
+        size = os.path.getsize(self.filepath)
+        print(mods)
+        print(size)
+        self.size_comparison.append(mods)
+        self.size_comparison.append(size)
         if len(self.size_comparison) == 4:
             if self.size_comparison[1] == self.size_comparison[3]: #no download progression
                 self.check_path.configure(text="File path has been found.\nNo current download.")
@@ -164,14 +243,22 @@ class sleepContent(mainContent):
         self.time_button = customtkinter.CTkButton(self, text="Start sleep timer", command=self.start_sleep)
         self.time_button.grid(row=2, column=0, columnspan=4)
 
+        self.minutes = 0
         #Time countdown
     
     def sliding(self, value):
         self.time_value.configure(text=int(value))
 
     def start_sleep(self):
-        time.sleep(60*self.time_slider.get())
-        shutdown()
+        self.minutes = self.time_slider.get()
+        self.after(0, self.sleep_process)
+        
+    def sleep_process(self):
+        self.minutes -= 1
+        if self.minutes == -1:
+            shutdown()
+        else:
+            self.after(60000, self.sleep_process)
 
 
 
